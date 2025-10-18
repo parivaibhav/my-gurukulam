@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    // "types": [] // Removed to avoid missing type definition errors
+  }
+}
