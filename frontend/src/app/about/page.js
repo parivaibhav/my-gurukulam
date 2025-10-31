@@ -74,7 +74,7 @@ export default function AboutPage() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-28 mt-20 px-6 text-center">
+      <section className="relative w-full bg-gradient-to-r from-orange-600 to-red-600 text-white py-28 mt-20 px-6 text-center">
         <motion.h1
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -103,7 +103,7 @@ export default function AboutPage() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="text-4xl font-bold text-blue-700 mb-6">Our Mission</h2>
+          <h2 className="text-4xl font-bold text-red-700 mb-6">Our Mission</h2>
           <p className="text-gray-700 text-lg leading-relaxed">
             To foster a learning environment that integrates modern technology
             with traditional values, cultivating innovation, leadership, and
@@ -128,13 +128,13 @@ export default function AboutPage() {
       </section>
 
       {/* Core Values Section */}
-      <section className="bg-gray-50 py-20 px-6">
+      <section className="py-20 px-6">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-4xl font-bold text-center text-blue-700 mb-12"
+          className="text-4xl font-bold text-center text-red-700 mb-12"
         >
           Our Core Values
         </motion.h2>
@@ -143,13 +143,13 @@ export default function AboutPage() {
           {values.map((val, idx) => (
             <motion.div
               key={idx}
-              className="flex flex-col items-center text-center p-6 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 hover:scale-105 cursor-pointer transition-transform"
+              className="flex flex-col items-center text-center p-6 rounded-3xl bg-gradient-to-br from-red-50 to-red-100 hover:scale-105 cursor-pointer transition-transform"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.2, duration: 0.5 }}
             >
-              <h3 className="text-xl font-semibold text-blue-700 mb-2">
+              <h3 className="text-xl font-semibold text-red-500 mb-2">
                 {val.title}
               </h3>
               <p className="text-gray-600">{val.description}</p>
@@ -159,18 +159,18 @@ export default function AboutPage() {
       </section>
 
       {/* Faculty Section */}
-      <section className="max-w-7xl mx-auto px-6 py-20">
+      <section className="max-w-7xl mx-auto px-6 py-20 ">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-4xl font-bold text-center text-blue-700 mb-12"
+          className="text-4xl font-bold text-center text-red-700 mb-12"
         >
           Meet Our Faculty
         </motion.h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12 place-items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12 place-items-center ">
           {faculty.map((teacher, idx) => (
             <motion.div
               key={idx}
@@ -189,10 +189,10 @@ export default function AboutPage() {
                   alt={teacher.name}
                   width={128}
                   height={128}
-                  className="w-full h-full object-cover rounded-full border-2 border-blue-500"
+                  className="w-full h-full object-cover rounded-full border-2 border-red-500"
                 />
               </motion.div>
-              <h3 className="text-xl font-semibold text-blue-700">
+              <h3 className="text-xl font-semibold text-red-500">
                 {teacher.name}
               </h3>
               <p className="text-gray-600">{teacher.subject}</p>

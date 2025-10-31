@@ -78,9 +78,9 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 border-b border-gray-300 ${
         isScrolled
-          ? "backdrop-blur-md bg-white/70 shadow-md"
+          ? "backdrop-blur-3xl bg-white/70 "
           : "bg-white shadow-none"
       }`}
     >
@@ -94,7 +94,7 @@ export default function Header() {
             height={50}
             priority
           />
-          <span className="text-lg md:text-xl font-semibold text-gray-800">
+          <span className="text-lg md:text-xl font-semibold text-orange-600">
             SSSDIIT Gurukul
           </span>
         </Link>
@@ -105,7 +105,7 @@ export default function Header() {
             <Link
               key={link.name}
               href={link.href}
-              className="text-gray-700 hover:text-blue-600 font-medium transition-all duration-200"
+              className="text-gray-700 hover:text-red-600 font-medium transition-all duration-200"
             >
               {link.name}
             </Link>
@@ -117,7 +117,7 @@ export default function Header() {
             onMouseEnter={() => setIsDesktopMoreOpen(true)}
             onMouseLeave={() => setIsDesktopMoreOpen(false)}
           >
-            <button className="flex items-center gap-1 text-gray-700 hover:text-blue-600 font-medium transition-all duration-200">
+            <button className="flex items-center gap-1 text-gray-700 hover:text-red-600 font-medium transition-all duration-200">
               More <MdKeyboardArrowDown size={18} />
             </button>
             <AnimatePresence>
@@ -143,7 +143,7 @@ export default function Header() {
                     >
                       <Link
                         href={link.href}
-                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-150"
+                        className="block px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-150"
                       >
                         {link.name}
                       </Link>
@@ -156,7 +156,7 @@ export default function Header() {
 
           <Link
             href="/login"
-            className="bg-blue-600 text-white px-5 py-2 rounded-full font-medium hover:bg-blue-700 transition-all duration-200"
+            className="bg-orange-600 text-white px-5 py-2 rounded-full font-medium hover:bg-red-700 transition-all duration-200"
           >
             Login
           </Link>
@@ -165,7 +165,7 @@ export default function Header() {
         {/* Mobile Menu Toggle */}
         <button
           onClick={toggleMenu}
-          className="md:hidden text-gray-700 hover:text-blue-600 focus:outline-none transition-transform"
+          className="md:hidden text-gray-700 hover:text-red-600 focus:outline-none transition-transform"
         >
           {isOpen ? <IoCloseSharp size={28} /> : <HiOutlineMenu size={28} />}
         </button>
@@ -205,7 +205,7 @@ export default function Header() {
                 <IoCloseSharp
                   size={28}
                   onClick={() => setIsOpen(false)}
-                  className="text-gray-700 hover:text-blue-600 cursor-pointer"
+                  className="text-gray-700 hover:text-red-600 cursor-pointer"
                 />
               </div>
 
@@ -215,7 +215,7 @@ export default function Header() {
                     <Link
                       href={link.href}
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 text-gray-700 font-medium text-3xl hover:text-blue-600 transition-all duration-200"
+                      className="flex items-center gap-3 text-gray-700 font-medium text-3xl hover:text-orange-600 transition-all duration-200"
                     >
                       {link.name} <FiArrowUpRight size={28} />
                     </Link>
@@ -226,7 +226,7 @@ export default function Header() {
                 <motion.div>
                   <button
                     onClick={() => setIsMoreOpen(!isMoreOpen)}
-                    className="flex items-center gap-2 text-gray-700 font-medium text-3xl hover:text-blue-600 transition-all duration-200"
+                    className="flex items-center gap-2 text-gray-700 font-medium text-3xl hover:text-orange-600 transition-all duration-200"
                   >
                     More <MdKeyboardArrowDown size={28} />
                   </button>
@@ -254,7 +254,7 @@ export default function Header() {
                             <Link
                               href={link.href}
                               onClick={() => setIsOpen(false)}
-                              className="flex items-center gap-2 text-gray-600 text-2xl hover:text-blue-600 transition-all duration-150"
+                              className="flex items-center gap-2 text-gray-600 text-2xl hover:text-orange-600 transition-all duration-150"
                             >
                               {link.name} <FiArrowUpRight size={22} />
                             </Link>
@@ -265,13 +265,17 @@ export default function Header() {
                   </AnimatePresence>
                 </motion.div>
 
-                <motion.button
+                <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="mt-8 w-full bg-blue-600 text-white text-lg font-semibold py-3 rounded-xl shadow-md hover:bg-blue-700 transition-all duration-300"
                 >
-                  Login
-                </motion.button>
+                  <Link
+                    href="/login"
+                    className="mt-8 block w-full text-center bg-orange-600 text-white text-lg font-semibold py-3 rounded-xl shadow-md hover:bg-red-700 transition-all duration-300"
+                  >
+                    Login
+                  </Link>
+                </motion.div>
               </motion.nav>
 
               <motion.div className="mt-auto pt-10 text-sm text-gray-400 text-center">

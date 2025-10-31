@@ -1,5 +1,7 @@
 import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "react-hot-toast";
+import ChatBot from "@/components/ChatBot";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,7 +24,12 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="icon" href="/gurukul-logo.png" />
       </head>
-      <body className={inter.className}>{children}</body>
+
+      <body className={inter.className}>
+        <Toaster position="top-center" />  
+        {children}
+         <ChatBot />
+      </body>
     </html>
   );
 }

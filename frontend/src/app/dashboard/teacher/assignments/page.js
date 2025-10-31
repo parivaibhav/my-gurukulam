@@ -1,32 +1,69 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FiEdit, FiTrash2, FiPlus } from "react-icons/fi";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon, Plus, Trash2, Edit } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function TeacherAssignments() {
   const [assignments, setAssignments] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newAssignment, setNewAssignment] = useState({
     title: "",
     description: "",
-    className: "",
-    dueDate: "",
+    classId: "",
+    dueDate: null,
   });
 
-  // Fetch assignments from backend
+  // Fetch assignments and classes
   useEffect(() => {
-    async function fetchAssignments() {
+    async function fetchData() {
       try {
-        const res = await fetch("/api/teacher/assignments"); // your API route
-        const data = await res.json();
-        setAssignments(data);
+        const [assignRes, classRes] = await Promise.all([
+          fetch("/api/teacher/assignments"),
+          fetch("/api/classes"),
+        ]);
+
+        const [assignData, classData] = await Promise.all([
+          assignRes.json(),
+          classRes.json(),
+        ]);
+
+        setAssignments(assignData);
+        setClasses(classData);
       } catch (error) {
-        console.error("Failed to fetch assignments:", error);
+        console.error("Failed to fetch data:", error);
       } finally {
         setLoading(false);
       }
     }
-    fetchAssignments();
+    fetchData();
   }, []);
 
   // Add new assignment
@@ -38,9 +75,16 @@ export default function TeacherAssignments() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newAssignment),
       });
-      const savedAssignment = await res.json();
-      setAssignments([savedAssignment, ...assignments]);
-      setNewAssignment({ title: "", description: "", className: "", dueDate: "" });
+
+      const saved = await res.json();
+      setAssignments([saved, ...assignments]);
+
+      setNewAssignment({
+        title: "",
+        description: "",
+        classId: "",
+        dueDate: null,
+      });
     } catch (error) {
       console.error("Failed to add assignment:", error);
     }
@@ -51,100 +95,188 @@ export default function TeacherAssignments() {
     if (!confirm("Are you sure you want to delete this assignment?")) return;
     try {
       await fetch(`/api/teacher/assignments/${id}`, { method: "DELETE" });
-      setAssignments(assignments.filter((assignment) => assignment.id !== id));
+      setAssignments(assignments.filter((a) => a.id !== id));
     } catch (error) {
       console.error("Failed to delete assignment:", error);
     }
   };
 
-  if (loading) return <p className="p-4 text-gray-600">Loading assignments...</p>;
+  if (loading)
+    return (
+      <div className="p-6 text-center text-muted-foreground">Loading...</div>
+    );
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">Assignments</h1>
+    <div className="p-6 space-y-6">
+      {/* Add Assignment Card */}
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold flex items-center justify-between">
+            Add Assignment
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={handleAdd}
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {/* Title */}
+            <Input
+              placeholder="Assignment Title"
+              value={newAssignment.title}
+              onChange={(e) =>
+                setNewAssignment({ ...newAssignment, title: e.target.value })
+              }
+              required
+            />
 
-      {/* Add New Assignment Form */}
-      <form
-        onSubmit={handleAdd}
-        className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 items-end"
-      >
-        <input
-          type="text"
-          placeholder="Title"
-          value={newAssignment.title}
-          onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
-          className="border px-3 py-2 rounded"
-          required
-        />
-        <input
-          type="text"
-          placeholder="Class Name"
-          value={newAssignment.className}
-          onChange={(e) => setNewAssignment({ ...newAssignment, className: e.target.value })}
-          className="border px-3 py-2 rounded"
-          required
-        />
-        <input
-          type="date"
-          value={newAssignment.dueDate}
-          onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })}
-          className="border px-3 py-2 rounded"
-          required
-        />
-        <button
-          type="submit"
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition col-span-full sm:col-auto"
-        >
-          <FiPlus /> Add Assignment
-        </button>
-        <input
-          type="text"
-          placeholder="Description"
-          value={newAssignment.description}
-          onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })}
-          className="border px-3 py-2 rounded col-span-full"
-          required
-        />
-      </form>
-
-      {/* Assignments Table */}
-      {assignments.length === 0 ? (
-        <p className="text-gray-600">No assignments found.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full table-auto border border-gray-200 rounded">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-2">Title</th>
-                <th className="px-4 py-2">Class</th>
-                <th className="px-4 py-2">Due Date</th>
-                <th className="px-4 py-2">Description</th>
-                <th className="px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignments.map((assignment) => (
-                <tr key={assignment.id} className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="px-4 py-2">{assignment.title}</td>
-                  <td className="px-4 py-2">{assignment.className}</td>
-                  <td className="px-4 py-2">{new Date(assignment.dueDate).toLocaleDateString()}</td>
-                  <td className="px-4 py-2">{assignment.description}</td>
-                  <td className="px-4 py-2 flex gap-2 justify-center">
-                    {/* Optional Edit Feature */}
-                    <FiEdit className="text-blue-600 hover:text-blue-800 cursor-pointer" />
-                    <button
-                      onClick={() => handleDelete(assignment.id)}
-                      className="text-red-600 hover:text-red-800"
+            {/* Class Dropdown */}
+            <Select
+              value={newAssignment.classId}
+              onValueChange={(val) =>
+                setNewAssignment({ ...newAssignment, classId: val })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Class" />
+              </SelectTrigger>
+              <SelectContent>
+                {classes.length === 0 ? (
+                  <SelectItem disabled value="none">
+                    No classes found
+                  </SelectItem>
+                ) : (
+                  classes.map((cls, index) => (
+                    <SelectItem
+                      key={cls._id || cls.id || index}
+                      value={cls._id || cls.id || `class-${index}`}
                     >
-                      <FiTrash2 />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                      {cls.className} ({cls.courseName} - {cls.year})
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+
+            {/* Date Picker */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !newAssignment.dueDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {newAssignment.dueDate ? (
+                    format(newAssignment.dueDate, "PPP")
+                  ) : (
+                    <span>Pick Due Date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={newAssignment.dueDate}
+                  onSelect={(date) =>
+                    setNewAssignment({ ...newAssignment, dueDate: date })
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Description */}
+            <Textarea
+              placeholder="Assignment Description"
+              value={newAssignment.description}
+              onChange={(e) =>
+                setNewAssignment({
+                  ...newAssignment,
+                  description: e.target.value,
+                })
+              }
+              className="sm:col-span-2 lg:col-span-3"
+              required
+            />
+
+            {/* Submit */}
+            <Button
+              type="submit"
+              className="w-full sm:col-span-2 lg:col-span-3 bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Assignment
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* All Assignments Table */}
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold">
+            All Assignments
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {assignments.length === 0 ? (
+            <p className="text-muted-foreground">No assignments found.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Class</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {assignments.map((a) => (
+                    <TableRow key={a._id}>
+                      <TableCell>{a.title}</TableCell>
+                      <TableCell>
+                        {classes.find((c) => c._id === a.classId)
+                          ? `${
+                              classes.find((c) => c._id === a.classId).className
+                            } (${
+                              classes.find((c) => c._id === a.classId)
+                                .courseName
+                            } - ${
+                              classes.find((c) => c._id === a.classId).year
+                            })`
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {a.dueDate ? format(new Date(a.dueDate), "PPP") : "—"}
+                      </TableCell>
+                      <TableCell className="max-w-[250px] truncate">
+                        {a.description}
+                      </TableCell>
+                      <TableCell className="flex gap-2">
+                        <Button variant="ghost" size="icon">
+                          <Edit className="h-4 w-4 text-blue-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(a._id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

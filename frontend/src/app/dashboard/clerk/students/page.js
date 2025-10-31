@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -11,26 +10,20 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { FiEdit, FiTrash2, FiPlus, FiFilter } from "react-icons/fi";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { RiDeleteBin4Fill } from "react-icons/ri";
+import { LiaEditSolid } from "react-icons/lia";
 
 export default function ManageStudents() {
+  const router = useRouter();
+
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
-  const [selectedYear, setSelectedYear] = useState("");
-  const [newStudent, setNewStudent] = useState({ name: "", rollNo: "" });
-  const [editStudent, setEditStudent] = useState(null);
 
-  // Fetch all classes from backend
+  // 📌 Fetch all classes
   useEffect(() => {
     fetchClasses();
   }, []);
@@ -45,11 +38,11 @@ export default function ManageStudents() {
     }
   };
 
-  // Fetch students dynamically
-  const fetchStudents = async (filters) => {
+  // 📌 Fetch students dynamically
+  const fetchStudents = async (filters = {}) => {
     const query = new URLSearchParams(filters).toString();
     try {
-      const res = await fetch(`/api/clerk/students?${query}`);
+      const res = await fetch(`http://localhost:5000/api/students?${query}`);
       const data = await res.json();
       setStudents(data);
     } catch {
@@ -57,74 +50,23 @@ export default function ManageStudents() {
     }
   };
 
-  // Handle Filter Changes
+  // 📌 Apply filters dynamically
   useEffect(() => {
-    if (selectedCourse || selectedClass || selectedYear) {
+    const selectedClassData = classes.find(
+      (c) => c.className === selectedClass && c.courseName === selectedCourse
+    );
+
+    if (selectedCourse || selectedClass) {
       fetchStudents({
-        courseName: selectedCourse,
-        className: selectedClass,
-        year: selectedYear,
+        classId: selectedClassData?._id,
+        course: selectedCourse,
       });
+    } else {
+      fetchStudents();
     }
-  }, [selectedCourse, selectedClass, selectedYear]);
+  }, [selectedCourse, selectedClass, classes]);
 
-  // Add new student
-  const handleAddStudent = async () => {
-    if (!newStudent.name || !newStudent.rollNo || !selectedClass)
-      return toast.error("Please fill all fields");
-
-    const res = await fetch("/api/clerk/students", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...newStudent,
-        classId: selectedClass,
-      }),
-    });
-
-    if (res.ok) {
-      toast.success("Student added successfully");
-      setNewStudent({ name: "", rollNo: "" });
-      fetchStudents({
-        courseName: selectedCourse,
-        className: selectedClass,
-        year: selectedYear,
-      });
-    } else toast.error("Failed to add student");
-  };
-
-  // Delete student
-  const handleDeleteStudent = async (id) => {
-    if (!confirm("Are you sure you want to delete this student?")) return;
-    await fetch(`/api/clerk/students/${id}`, { method: "DELETE" });
-    toast.success("Student deleted");
-    fetchStudents({
-      courseName: selectedCourse,
-      className: selectedClass,
-      year: selectedYear,
-    });
-  };
-
-  // Update student
-  const handleUpdateStudent = async () => {
-    const res = await fetch(`/api/clerk/students/${editStudent._id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editStudent),
-    });
-
-    if (res.ok) {
-      toast.success("Student updated");
-      setEditStudent(null);
-      fetchStudents({
-        courseName: selectedCourse,
-        className: selectedClass,
-        year: selectedYear,
-      });
-    } else toast.error("Failed to update student");
-  };
-
-  // Extract unique filters
+  // 📌 Extract unique filter lists
   const courses = [...new Set(classes.map((c) => c.courseName))];
   const classNames = [
     ...new Set(
@@ -133,28 +75,42 @@ export default function ManageStudents() {
         .map((c) => c.className)
     ),
   ];
-  const years = [
-    ...new Set(
-      classes
-        .filter(
-          (c) =>
-            (!selectedCourse || c.courseName === selectedCourse) &&
-            (!selectedClass || c.className === selectedClass)
-        )
-        .map((c) => c.year)
-    ),
-  ];
+
+  // 📌 Delete student
+  const handleDelete = async (id) => {
+    if (confirm("Are you sure you want to delete this student?")) {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/students/delete/${id}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!res.ok) throw new Error("Failed to delete student");
+
+        toast.success("Student deleted");
+        fetchStudents({
+          course: selectedCourse,
+          className: selectedClass,
+        });
+      } catch {
+        toast.error("Error deleting student");
+      }
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-3xl font-bold mb-4">🎓 Manage Students</h1>
 
-      {/* --- Filter Section --- */}
-      <Card>
+      {/* --- Filters --- */}
+      <Card className="shadow-lg rounded-xl border border-gray-200">
         <CardHeader>
           <CardTitle>Filter Students</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col sm:flex-row gap-3">
+        <CardContent className="flex flex-col sm:flex-row gap-3 flex-wrap">
+          {/* Select Course */}
           <Select
             onValueChange={setSelectedCourse}
             value={selectedCourse || ""}
@@ -171,6 +127,7 @@ export default function ManageStudents() {
             </SelectContent>
           </Select>
 
+          {/* Select Class */}
           <Select onValueChange={setSelectedClass} value={selectedClass || ""}>
             <SelectTrigger className="sm:w-52">
               <SelectValue placeholder="Select Class" />
@@ -184,131 +141,87 @@ export default function ManageStudents() {
             </SelectContent>
           </Select>
 
-          <Select onValueChange={setSelectedYear} value={selectedYear || ""}>
-            <SelectTrigger className="sm:w-52">
-              <SelectValue placeholder="Select Year" />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((yr) => (
-                <SelectItem key={yr} value={yr}>
-                  {yr}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Add Student Button */}
+          <Button
+            className="sm:ml-auto mt-2 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => router.push("/dashboard/clerk/students/create")}
+          >
+            + Add Student
+          </Button>
         </CardContent>
       </Card>
 
-      {/* --- Student Management --- */}
-      {selectedClass && (
-        <Card>
+      {/* --- Student Table --- */}
+      {students.length > 0 ? (
+        <Card className="shadow-lg rounded-xl border border-gray-200">
           <CardHeader>
             <CardTitle>👨‍🎓 Students List</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Add Student Form */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                placeholder="Student Name"
-                value={newStudent.name}
-                onChange={(e) =>
-                  setNewStudent({ ...newStudent, name: e.target.value })
-                }
-              />
-              <Input
-                placeholder="Roll No."
-                value={newStudent.rollNo}
-                onChange={(e) =>
-                  setNewStudent({ ...newStudent, rollNo: e.target.value })
-                }
-              />
-              <Button onClick={handleAddStudent}>
-                <FiPlus className="mr-2" /> Add
-              </Button>
-            </div>
-
-            {/* Student Table */}
-            <div className="overflow-x-auto border rounded-lg">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-100 text-gray-700">
-                  <tr>
-                    <th className="text-left p-2">#</th>
-                    <th className="text-left p-2">Roll No</th>
-                    <th className="text-left p-2">Name</th>
-                    <th className="text-right p-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.length > 0 ? (
-                    students.map((s, i) => (
-                      <tr
-                        key={s._id}
-                        className="border-t hover:bg-gray-50 transition"
+          <CardContent className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-100 text-gray-700">
+                <tr>
+                  <th className="text-left p-2">#</th>
+                  <th className="text-left p-2">GR No</th>
+                  <th className="text-left p-2">Roll No</th>
+                  <th className="text-left p-2">Name</th>
+                  <th className="text-left p-2">Course</th>
+                  <th className="text-left p-2">Class</th>
+                  <th className="text-left p-2">Profile</th>
+                  <th className="text-right p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {students.map((s, i) => (
+                  <tr
+                    key={s._id}
+                    className="border-t hover:bg-gray-50 transition"
+                  >
+                    <td className="p-2">{i + 1}</td>
+                    <td className="p-2">{s.grNumber}</td>
+                    <td className="p-2">{s.rollNumber}</td>
+                    <td className="p-2">{s.name}</td>
+                    <td className="p-2">{s.course}</td>
+                    <td className="p-2">{s.class}</td>
+                    <td className="p-2">
+                      {s.profileImage ? (
+                        <img
+                          src={`http://localhost:5000${s.profileImage}`}
+                          alt="Profile"
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-gray-400 italic">No Image</span>
+                      )}
+                    </td>
+                    <td className="p-2 flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          router.push(`/dashboard/clerk/students/edit/${s._id}`)
+                        }
                       >
-                        <td className="p-2">{i + 1}</td>
-                        <td className="p-2">{s.rollNo}</td>
-                        <td className="p-2">{s.name}</td>
-                        <td className="p-2 flex justify-end gap-3">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setEditStudent(s)}
-                          >
-                            <FiEdit className="text-blue-500" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteStudent(s._id)}
-                          >
-                            <FiTrash2 className="text-red-500" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="4" className="text-center p-3 text-gray-500">
-                        No students found for this selection.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        <LiaEditSolid />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(s._id)}
+                      >
+                        <RiDeleteBin4Fill className="text-red-500" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </CardContent>
         </Card>
-      )}
-
-      {/* --- Edit Modal --- */}
-      {editStudent && (
-        <Dialog open={!!editStudent} onOpenChange={() => setEditStudent(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Student</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <Input
-                value={editStudent.name}
-                onChange={(e) =>
-                  setEditStudent({ ...editStudent, name: e.target.value })
-                }
-              />
-              <Input
-                value={editStudent.rollNo}
-                onChange={(e) =>
-                  setEditStudent({ ...editStudent, rollNo: e.target.value })
-                }
-              />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditStudent(null)}>
-                Cancel
-              </Button>
-              <Button onClick={handleUpdateStudent}>Save</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      ) : (
+        <div className="text-center text-gray-500 mt-4">
+          No students found for this selection.
+        </div>
       )}
     </div>
   );

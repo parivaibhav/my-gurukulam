@@ -1,4 +1,5 @@
 import express from "express";
+import multer from "multer";
 import {
   addStudent,
   getStudents,
@@ -8,9 +9,13 @@ import {
 
 const router = express.Router();
 
-router.post("/", addStudent);
+// Multer setup for image upload
+const upload = multer({ dest: "uploads/" });
+
+// Routes
+router.post("/add", upload.single("profileImage"), addStudent);
 router.get("/", getStudents);
-router.put("/:id", updateStudent);
-router.delete("/:id", deleteStudent);
+router.put("/update/:id", upload.single("profileImage"), updateStudent);
+router.delete("/delete/:id", deleteStudent);
 
 export default router;

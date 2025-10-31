@@ -1,62 +1,79 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FiTrash2, FiPlus } from "react-icons/fi";
+import api from "@/lib/api";
+import toast from "react-hot-toast";
 
 export default function ClerkGallery() {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState(null);
+  const [title, setTitle] = useState("");
 
-  // Fetch gallery photos
+  const fileInputRef = useRef(null);
+
+  // ✅ Fetch gallery photos
   useEffect(() => {
-    async function fetchPhotos() {
+    const fetchPhotos = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/clerk/gallery"); // your API route
-        const data = await res.json();
-        setPhotos(data);
+        const res = await api.get("/gallery");
+        setPhotos(res.data);
       } catch (error) {
-        console.error("Failed to fetch gallery:", error);
+        toast.error("Failed to fetch gallery");
+        console.error("Fetch error:", error);
       } finally {
         setLoading(false);
       }
-    }
+    };
     fetchPhotos();
   }, []);
 
-  // Upload photo
+  // ✅ Upload photo
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) return alert("Please select a file.");
+    if (!file) return toast.error("Please select a file.");
+    if (!title.trim()) return toast.error("Please enter a title.");
     setUploading(true);
 
     const formData = new FormData();
     formData.append("image", file);
+    formData.append("title", title);
 
     try {
-      const res = await fetch("http://localhost:5000/api/clerk/gallery", {
-        method: "POST",
-        body: formData,
+      const res = await api.post("/gallery", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      const newPhoto = await res.json();
-      setPhotos([newPhoto, ...photos]);
+
+      setPhotos([res.data, ...photos]);
+      setTitle("");
       setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      toast.success("Photo uploaded successfully!");
     } catch (error) {
       console.error("Upload failed:", error);
+      toast.error("Upload failed. Please try again.");
     } finally {
       setUploading(false);
     }
   };
 
-  // Delete photo
+  // ✅ Delete photo
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this photo?")) return;
+    const confirmDelete = confirm(
+      "Are you sure you want to delete this photo?"
+    );
+    if (!confirmDelete) return;
+
     try {
-      await fetch(`http://localhost:5000/api/clerk/gallery/${id}`, { method: "DELETE" });
+      await api.delete(`/gallery/${id}`);
       setPhotos(photos.filter((photo) => photo.id !== id));
+      toast.success("Photo deleted successfully!");
     } catch (error) {
       console.error("Delete failed:", error);
+      toast.error("Failed to delete photo.");
     }
   };
 
@@ -67,12 +84,23 @@ export default function ClerkGallery() {
       <h1 className="text-2xl font-bold text-gray-800 mb-4">Photo Gallery</h1>
 
       {/* Upload Form */}
-      <form onSubmit={handleUpload} className="mb-6 flex gap-2 items-center">
+      <form
+        onSubmit={handleUpload}
+        className="mb-6 flex flex-col sm:flex-row gap-2 items-center"
+      >
+        <input
+          type="text"
+          placeholder="Enter photo title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="border px-3 py-2 rounded w-full sm:w-auto flex-1"
+        />
         <input
           type="file"
+          ref={fileInputRef}
           onChange={(e) => setFile(e.target.files[0])}
           accept="image/*"
-          className="border px-3 py-2 rounded"
+          className="border px-3 py-2 rounded w-full sm:w-auto"
         />
         <button
           type="submit"
@@ -95,9 +123,12 @@ export default function ClerkGallery() {
             >
               <img
                 src={photo.url}
-                alt="Gallery"
+                alt={photo.title}
                 className="w-full h-48 object-cover"
               />
+              <div className="absolute bottom-0 bg-black/60 text-white text-sm w-full text-center py-1">
+                {photo.title}
+              </div>
               <button
                 onClick={() => handleDelete(photo.id)}
                 className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition"

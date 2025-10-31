@@ -104,7 +104,7 @@ export default function Home() {
             transition={{ duration: 1 }}
           >
             <motion.h1
-              className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4 bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent leading-tight"
+              className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4 bg-orange-600 bg-clip-text text-transparent leading-tight"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 1 }}
@@ -137,11 +137,11 @@ export default function Home() {
             {whyUsCards.map((item, i) => (
               <motion.div
                 key={i}
-                className="bg-white rounded-2xl p-6 shadow-md hover:shadow-lg hover:-translate-y-2 transition-all text-center border"
+                className="bg-white rounded-2xl p-6  hover:-translate-y-2 transition-all text-center border"
                 whileHover={{ scale: 1.05 }}
               >
                 <div className="flex justify-center mb-4">{item.icon}</div>
-                <h3 className="text-xl font-semibold text-blue-700 mb-2">
+                <h3 className="text-xl font-semibold text-red-400 mb-2">
                   {item.title}
                 </h3>
                 <p className="text-gray-600">{item.desc}</p>
@@ -166,9 +166,9 @@ export default function Home() {
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="bg-white/70 backdrop-blur-md border border-gray-200 shadow-md rounded-2xl p-6 hover:shadow-xl transition-all">
+                <Card className="bg-white/70  border border-gray-100 rounded-2xl p-6 transition-all">
                   <CardHeader>
-                    <CardTitle className="text-xl font-semibold text-blue-700">
+                    <CardTitle className="text-xl font-semibold text-red-400">
                       {dept}
                     </CardTitle>
                   </CardHeader>
@@ -217,7 +217,7 @@ export default function Home() {
         </section>
         {/* WEBSITE VISITOR COUNT */}
         {/* STATS SECTION: Visitors, Placed Students, Alumni */}
-        <section className="py-16 bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-center">
+        <section className="py-16 bg-gradient-to-r from-orange-600 to-red-500 text-white text-center">
           <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8">
             {/* Website Visitors */}
             <motion.div
@@ -306,7 +306,7 @@ export default function Home() {
                     alt={p.name}
                     className="w-24 h-24 mx-auto rounded-full mb-4"
                   />
-                  <h3 className="text-xl font-semibold text-blue-700">
+                  <h3 className="text-xl font-semibold text-red-400">
                     {p.name}
                   </h3>
                   <p className="text-gray-600">{p.role}</p>
@@ -318,7 +318,7 @@ export default function Home() {
 
           <div className="flex justify-center mt-12">
             <Link href="/placements">
-              <Button className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-8 py-3 rounded-full font-semibold hover:opacity-90 transition-all">
+              <Button className="bg-gradient-to-r from-orange-600 to-red-400 text-white px-8 py-3 rounded-full font-semibold hover:opacity-90 transition-all">
                 View All Placements
               </Button>
             </Link>
@@ -326,7 +326,7 @@ export default function Home() {
         </section>
 
         {/* CTA */}
-        <section className="text-center py-24 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+        <section className="text-center py-24 bg-gradient-to-r from-orange-600 to-red-500 text-white">
           <motion.h2
             className="text-4xl font-bold mb-4"
             initial={{ opacity: 0, y: 30 }}
@@ -340,7 +340,7 @@ export default function Home() {
           </p>
           <div className="flex justify-center">
             <Link href="/about">
-              <Button className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-full text-lg font-semibold">
+              <Button className="bg-white text-red-500 hover:bg-gray-100 px-8 py-3 rounded-full text-lg font-semibold">
                 Learn More
               </Button>
             </Link>

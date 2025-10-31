@@ -13,7 +13,7 @@ import { FaYoutube } from "react-icons/fa6";
 
 export default function Footer() {
   return (
-    <footer className="bg-white text-gray-800 pt-10">
+    <footer className="bg-white text-gray-800 pt-10 border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-6 md:px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-gray-200">
           {/* Logo & About */}
@@ -39,14 +39,14 @@ export default function Footer() {
             <div className="flex gap-10">
               <ul className="space-y-2">
                 <li>
-                  <Link href="/" className="hover:text-blue-600 transition">
+                  <Link href="/" className="hover:text-red-600 transition">
                     Home
                   </Link>
                 </li>
                 <li>
                   <Link
                     href="/about"
-                    className="hover:text-blue-600 transition"
+                    className="hover:text-red-600 transition"
                   >
                     About Us
                   </Link>
@@ -54,7 +54,7 @@ export default function Footer() {
                 <li>
                   <Link
                     href="/contact"
-                    className="hover:text-blue-600 transition"
+                    className="hover:text-red-600 transition"
                   >
                     Contact Us
                   </Link>
@@ -62,7 +62,7 @@ export default function Footer() {
                 <li>
                   <Link
                     href="/login"
-                    className="hover:text-blue-600 transition"
+                    className="hover:text-red-600 transition"
                   >
                     Login
                   </Link>
@@ -70,14 +70,14 @@ export default function Footer() {
               </ul>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/" className="hover:text-blue-600 transition">
+                  <Link href="/" className="hover:text-red-600 transition">
                     Addmissions
                   </Link>
                 </li>
                 <li>
                   <Link
                     href="/about"
-                    className="hover:text-blue-600 transition"
+                    className="hover:text-red-600 transition"
                   >
                     Blog
                   </Link>
@@ -85,7 +85,7 @@ export default function Footer() {
                 <li>
                   <Link
                     href="/contact"
-                    className="hover:text-blue-600 transition"
+                    className="hover:text-red-600 transition"
                   >
                     Circulars
                   </Link>
@@ -93,7 +93,7 @@ export default function Footer() {
                 <li>
                   <Link
                     href="/login"
-                    className="hover:text-blue-600 transition"
+                    className="hover:text-red-600 transition"
                   >
                     Carrers
                   </Link>

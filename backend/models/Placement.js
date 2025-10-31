@@ -2,57 +2,63 @@ import mongoose from "mongoose";
 
 const placementSchema = new mongoose.Schema(
   {
+    // 🏢 Company Information
     companyName: {
       type: String,
-      required: true, // e.g., "TCS", "Infosys"
+      required: [true, "Company name is required"],
       trim: true,
     },
+
+    // 💼 Job Role
     jobRole: {
       type: String,
-      required: true, // e.g., "Software Engineer"
+      required: [true, "Job role is required"],
       trim: true,
     },
+
+    // 💰 Package Offered
     package: {
       type: String,
-      trim: true, // e.g., "6 LPA"
+      trim: true,
+      default: "",
     },
+
+    // 📍 Location of Placement
     location: {
       type: String,
-      trim: true, // e.g., "Bangalore, India"
+      trim: true,
+      default: "",
     },
+
+    // 📅 Drive Date
     driveDate: {
       type: Date,
-      required: true,
+      required: [true, "Drive date is required"],
     },
-    eligibilityCriteria: {
-      type: String,
-      trim: true, // e.g., "Minimum 7.0 CGPA, No active backlogs"
-    },
+
+    // 📝 Description
     description: {
       type: String,
       trim: true,
-    },
-    companyLogo: {
-      type: String,
-      trim: true, // URL to image (Cloudinary, etc.)
+      default: "",
     },
 
-    // Reference to students who got placed
+    // 🎓 Selected Students
     selectedStudents: [
       {
-        student: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User", // Must have role: "student"
+        // ✅ Use 'name' (matches frontend)
+        name: {
+          type: String,
+          required: [true, "Student name is required"],
+          trim: true,
         },
-        remarks: String, // e.g., "Offered internship" or "Full-time offer"
+        profileImage: {
+          type: String,
+          trim: true,
+          default: "",
+        },
       },
     ],
-
-    addedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // usually a clerk or admin
-      required: true,
-    },
   },
   { timestamps: true }
 );

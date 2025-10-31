@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,40 +10,41 @@ import Link from "next/link";
 import Footer from "../../../components/Footer";
 import Header from "../../../components/Header";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { Toaster, toast } from "sonner";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function Login() {
   const router = useRouter();
+  const recaptchaRef = useRef(null);
+
   const [form, setForm] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [captcha, setCaptcha] = useState(null);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
     setForm({ ...form, [id]: value });
+    if (value.trim() !== "") setErrors({ ...errors, [id]: "" });
+  };
 
-    if (value.trim() !== "") {
-      setErrors({ ...errors, [id]: "" });
-    }
+  const handleCaptchaChange = (token) => {
+    setCaptcha(token);
+    if (token) setErrors((prev) => ({ ...prev, captcha: "" }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    let valid = true;
-    let newErrors = { email: "", password: "" };
-
-    if (!form.email.trim()) {
-      newErrors.email = "Email is required";
-      valid = false;
-    }
-    if (!form.password.trim()) {
-      newErrors.password = "Password is required";
-      valid = false;
-    }
+    // Basic validation
+    const newErrors = {};
+    if (!form.email.trim()) newErrors.email = "Email is required";
+    if (!form.password.trim()) newErrors.password = "Password is required";
+    if (!captcha) newErrors.captcha = "Please verify captcha";
 
     setErrors(newErrors);
-    if (!valid) return;
+    if (Object.keys(newErrors).length > 0) return;
 
     setSubmitting(true);
 
@@ -51,143 +52,165 @@ export default function Login() {
       const res = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           email: form.email.toLowerCase().trim(),
           password: form.password,
+          captcha, // ✅ backend expects this key
         }),
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.message || "Login failed");
 
-      // Save token + role
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role);
+      toast.success(" Login successful!");
 
-      // Redirect based on role
-      switch (data.role) {
-        case "admin":
-          router.push("/dashboard/admin");
-          break;
-        case "clerk":
-          router.push("/dashboard/clerk");
-          break;
-        case "teacher":
-          router.push("/dashboard/teacher");
-          break;
-        default:
-          router.push("/dashboard");
-      }
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
+      setTimeout(() => {
+        switch (data.role) {
+          case "admin":
+            router.push("/dashboard/admin");
+            break;
+          case "clerk":
+            router.push("/dashboard/clerk");
+            break;
+          case "teacher":
+            router.push("/dashboard/teacher");
+            break;
+          default:
+            router.push("/dashboard");
+        }
+      }, 800);
+    } catch (err) {
+      toast.error(` ${err.message}`);
     } finally {
       setSubmitting(false);
+      recaptchaRef.current?.reset();
+      setCaptcha(null);
     }
   };
 
   return (
     <>
       <Header />
-      <div className="min-h-screen flex flex-col mt-4 bg-gradient-to-b from-blue-50 to-blue-100">
-        <div className="flex flex-1 items-center justify-center px-4 py-20">
-          <Card className="w-full max-w-md rounded-3xl overflow-hidden">
-            <CardHeader className="flex flex-col items-center space-y-4 pt-10">
-              <Image
-                src="/gurukul-logo.png"
-                width={100}
-                height={100}
-                alt="Gurukul Logo"
-                className="rounded-full border-2 border-white shadow-lg"
-              />
-              <CardTitle className="text-2xl font-bold">
-                Login to Your Account
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-8 pb-10 bg-white">
-              <form className="space-y-6" onSubmit={handleSubmit} noValidate>
-                <div>
-                  <Label htmlFor="email" className="text-gray-700 font-medium">
-                    Email
-                  </Label>
-                  <Input
-                    type="email"
-                    id="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="Enter your email"
-                    className={`mt-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                      errors.email ? "border-red-500" : ""
-                    }`}
-                  />
-                  <AnimatePresence>
+
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-orange-50 to-white py-12 px-4">
+        <div className="flex flex-1 items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-sm md:max-w-md"
+          >
+            <Card className="w-full rounded-3xl shadow-2xl border border-orange-100 backdrop-blur-sm bg-white/95 overflow-hidden">
+              <CardHeader className="flex flex-col items-center space-y-3 pt-8">
+                <Image
+                  src="/gurukul-logo.png"
+                  width={80}
+                  height={80}
+                  alt="Gurukul Logo"
+                  className="rounded-full border-2 border-orange-500 shadow-md"
+                />
+                <CardTitle className="text-2xl -m-0.5 font-extrabold text-gray-800 text-center">
+                  Welcome Back
+                </CardTitle>
+                <p className="text-sm text-gray-500 text-center max-w-xs">
+                  Login to access your personalized dashboard
+                </p>
+              </CardHeader>
+
+              <CardContent className="mt-4 px-6 pb-6">
+                <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+                  {/* Email */}
+                  <div>
+                    <Label
+                      htmlFor="email"
+                      className="text-gray-700 font-medium"
+                    >
+                      Email
+                    </Label>
+                    <Input
+                      type="email"
+                      id="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      placeholder="Enter your email"
+                      className={`mt-2 py-3 text-base focus:ring-2 focus:ring-orange-500 rounded ${
+                        errors.email ? "border-red-500" : "border-gray-200"
+                      }`}
+                    />
                     {errors.email && (
-                      <motion.p
-                        className="text-red-500 text-sm mt-1"
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                      >
+                      <p className="text-red-500 text-sm mt-1">
                         {errors.email}
-                      </motion.p>
+                      </p>
                     )}
-                  </AnimatePresence>
-                </div>
+                  </div>
 
-                <div>
-                  <Label
-                    htmlFor="password"
-                    className="text-gray-700 font-medium"
-                  >
-                    Password
-                  </Label>
-                  <Input
-                    type="password"
-                    id="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    placeholder="Enter your password"
-                    className={`mt-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                      errors.password ? "border-red-500" : ""
-                    }`}
-                  />
-                  <AnimatePresence>
+                  {/* Password */}
+                  <div>
+                    <Label
+                      htmlFor="password"
+                      className="text-gray-700 font-medium"
+                    >
+                      Password
+                    </Label>
+                    <Input
+                      type="password"
+                      id="password"
+                      value={form.password}
+                      onChange={handleChange}
+                      placeholder="Enter your password"
+                      className={`mt-2 py-3 text-base focus:ring-2 focus:ring-orange-500 rounded ${
+                        errors.password ? "border-red-500" : "border-gray-200"
+                      }`}
+                    />
                     {errors.password && (
-                      <motion.p
-                        className="text-red-500 text-sm mt-1"
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                      >
+                      <p className="text-red-500 text-sm mt-1">
                         {errors.password}
-                      </motion.p>
+                      </p>
                     )}
-                  </AnimatePresence>
-                </div>
+                  </div>
+                  {/* Forgot password */}
+                  <div className="text-right">
+                    <Link
+                      href="/forgot-password"
+                      className="text-sm text-orange-600 hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
 
-                <div className="text-right">
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm text-blue-600 hover:underline"
+                  {/* reCAPTCHA */}
+                  <div className="flex flex-col items-center">
+                    <ReCAPTCHA
+                      ref={recaptchaRef}
+                      sitekey="6Le_7vgrAAAAADVPrAB0aHUmDuGlVm5iMOxT5HO6" // 🔑 use site key here
+                      onChange={handleCaptchaChange}
+                      theme="light"
+                    />
+                    {errors.captcha && (
+                      <p className="text-red-500 text-sm mt-2">
+                        {errors.captcha}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Submit */}
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full py-4 font-semibold bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-lg hover:scale-105 transition-transform duration-300 rounded-xl"
                   >
-                    Forgot password?
-                  </Link>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:scale-105 transform transition"
-                >
-                  {submitting ? "Logging in..." : "Login"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+                    {submitting ? "Logging in..." : "Login"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </div>
+
       <Footer />
+      <Toaster richColors position="top-left" closeButton />
     </>
   );
 }

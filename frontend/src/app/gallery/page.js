@@ -60,7 +60,7 @@ export default function Gallery() {
       <Header />
 
       {/* Hero Section */}
-      <section className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-20 px-4 text-center mt-20">
+      <section className="w-full bg-gradient-to-r from-orange-600 to-red-600 text-white py-20 px-4 text-center mt-20">
         <h1 className="text-4xl sm:text-5xl font-bold mb-4 drop-shadow-lg">
           Photo Gallery
         </h1>

@@ -1,27 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { FiEdit, FiTrash2, FiPlus } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import { FiCheckCircle, FiXCircle, FiRefreshCcw } from "react-icons/fi";
+import { motion } from "framer-motion";
 
 export default function ClerkFees() {
-  const [fees, setFees] = useState([]);
+  const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newFee, setNewFee] = useState({
-    studentName: "",
-    className: "",
-    amount: "",
-    status: "Pending",
-  });
 
-  // Fetch fees from backend
+  // Fetch all student fees from API
   useEffect(() => {
     async function fetchFees() {
       try {
-        const res = await fetch("/api/clerk/fees"); // your API route
+        const res = await fetch("/api/clerk/fees");
         const data = await res.json();
-        setFees(data);
-      } catch (error) {
-        console.error("Failed to fetch fees:", error);
+        setStudents(data);
+      } catch (err) {
+        console.error("Failed to fetch student fees:", err);
       } finally {
         setLoading(false);
       }
@@ -29,151 +24,97 @@ export default function ClerkFees() {
     fetchFees();
   }, []);
 
-  // Add new fee
-  const handleAdd = async (e) => {
-    e.preventDefault();
+  // Handle payment update
+  const handlePayment = async (studentId, semester) => {
     try {
-      const res = await fetch("http://localhost:5000/api/clerk/fees", {
+      await fetch(`/api/clerk/fees/pay/${studentId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newFee),
+        body: JSON.stringify({ semester }),
       });
-      const savedFee = await res.json();
-      setFees([savedFee, ...fees]);
-      setNewFee({
-        studentName: "",
-        className: "",
-        amount: "",
-        status: "Pending",
-      });
-    } catch (error) {
-      console.error("Failed to add fee:", error);
-    }
-  };
-
-  // Delete fee
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this fee?")) return;
-    try {
-      await fetch(`http://localhost:5000/api/clerk/fees/${id}`, { method: "DELETE" });
-      setFees(fees.filter((fee) => fee.id !== id));
-    } catch (error) {
-      console.error("Failed to delete fee:", error);
-    }
-  };
-
-  // Payment simulation
-  const handlePayment = async (id) => {
-    // Replace this later with real payment gateway
-    if (!confirm("Proceed with payment?")) return;
-    try {
-      await fetch(`http://localhost:5000/api/clerk/fees/pay/${id}`, { method: "POST" });
-      setFees(
-        fees.map((fee) => (fee.id === id ? { ...fee, status: "Paid" } : fee))
+      setStudents((prev) =>
+        prev.map((s) =>
+          s._id === studentId
+            ? {
+                ...s,
+                fees: s.fees.map((f) =>
+                  f.semester === semester ? { ...f, status: "Paid" } : f
+                ),
+              }
+            : s
+        )
       );
-    } catch (error) {
-      console.error("Payment failed:", error);
+    } catch (err) {
+      console.error("Payment update failed:", err);
     }
   };
 
-  if (loading) return <p className="p-4 text-gray-600">Loading fees...</p>;
+  if (loading)
+    return <p className="p-4 text-gray-600">Loading student fees...</p>;
+
+  if (students.length === 0)
+    return <p className="p-6 text-gray-600">No students found.</p>;
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">Student Fees</h1>
-
-      {/* Add New Fee Form */}
-      <form
-        onSubmit={handleAdd}
-        className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 items-end"
+      <motion.h1
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-3xl font-bold text-gray-800 mb-6"
       >
-        <input
-          type="text"
-          placeholder="Student Name"
-          value={newFee.studentName}
-          onChange={(e) =>
-            setNewFee({ ...newFee, studentName: e.target.value })
-          }
-          className="border px-3 py-2 rounded"
-          required
-        />
-        <input
-          type="text"
-          placeholder="Class"
-          value={newFee.className}
-          onChange={(e) => setNewFee({ ...newFee, className: e.target.value })}
-          className="border px-3 py-2 rounded"
-          required
-        />
-        <input
-          type="number"
-          placeholder="Amount"
-          value={newFee.amount}
-          onChange={(e) => setNewFee({ ...newFee, amount: e.target.value })}
-          className="border px-3 py-2 rounded"
-          required
-        />
-        <button
-          type="submit"
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition col-span-full sm:col-auto"
-        >
-          <FiPlus /> Add Fee
-        </button>
-      </form>
+        Student Fee Management
+      </motion.h1>
 
-      {/* Fees Table */}
-      {fees.length === 0 ? (
-        <p className="text-gray-600">No fee records found.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full table-auto border border-gray-200 rounded">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-2">Student</th>
-                <th className="px-4 py-2">Class</th>
-                <th className="px-4 py-2">Amount</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {fees.map((fee) => (
+      <div className="overflow-x-auto bg-white shadow rounded-lg">
+        <table className="w-full table-auto border-collapse">
+          <thead className="bg-gray-100 text-left">
+            <tr>
+              <th className="px-4 py-2 border-b">Student Name</th>
+              <th className="px-4 py-2 border-b">Class</th>
+              <th className="px-4 py-2 border-b">Semester</th>
+              <th className="px-4 py-2 border-b">Amount</th>
+              <th className="px-4 py-2 border-b">Status</th>
+              <th className="px-4 py-2 border-b text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.map((student) =>
+              student.fees.map((fee) => (
                 <tr
-                  key={fee.id}
-                  className="border-b border-gray-200 hover:bg-gray-50"
+                  key={`${student._id}-${fee.semester}`}
+                  className="border-b hover:bg-gray-50"
                 >
-                  <td className="px-4 py-2">{fee.studentName}</td>
-                  <td className="px-4 py-2">{fee.className}</td>
-                  <td className="px-4 py-2">${fee.amount}</td>
+                  <td className="px-4 py-2">{student.name}</td>
+                  <td className="px-4 py-2">{student.className}</td>
+                  <td className="px-4 py-2">Semester {fee.semester}</td>
+                  <td className="px-4 py-2 font-medium">${fee.amount}</td>
                   <td
-                    className={`px-4 py-2 font-medium ${
+                    className={`px-4 py-2 font-semibold ${
                       fee.status === "Paid" ? "text-green-600" : "text-red-600"
                     }`}
                   >
                     {fee.status}
                   </td>
-                  <td className="px-4 py-2 flex gap-2 justify-center">
-                    {fee.status === "Pending" && (
+                  <td className="px-4 py-2 text-center">
+                    {fee.status === "Pending" ? (
                       <button
-                        onClick={() => handlePayment(fee.id)}
-                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition"
+                        onClick={() => handlePayment(student._id, fee.semester)}
+                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition flex items-center gap-2 mx-auto"
                       >
-                        Pay
+                        <FiCheckCircle /> Mark Paid
                       </button>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2 text-green-600">
+                        <FiCheckCircle /> Paid
+                      </span>
                     )}
-                    <button
-                      onClick={() => handleDelete(fee.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <FiTrash2 />
-                    </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

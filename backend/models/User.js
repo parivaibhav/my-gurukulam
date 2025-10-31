@@ -10,23 +10,27 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Common fields
+    // ✅ Common fields for all users
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
     email: {
       type: String,
-      required: function () {
-        return ["student", "teacher", "clerk", "admin"].includes(this.role);
-      },
+      required: true,
       unique: true,
       lowercase: true,
       trim: true,
     },
+
     mobileNumber: {
       type: String,
-      required: function () {
-        return ["student", "teacher", "clerk", "admin"].includes(this.role);
-      },
+      required: true,
       match: [/^\d{10}$/, "Please enter a valid 10-digit mobile number"],
     },
+
     password: {
       type: String,
       required: function () {
@@ -35,76 +39,108 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
     },
 
-    // Student-specific fields
-    name: {
+    profileImage: {
       type: String,
-      required: function () {
-        return this.role === "student";
-      },
+      default: "", // can later store uploaded file URL
+    },
+
+    // 🎓 Student-only fields
+    grNumber: {
+      type: String, // Random 6-digit number
+      unique: true,
+      sparse: true,
       trim: true,
     },
-    location: {
-      type: String,
-      required: function () {
-        return this.role === "student";
-      },
+
+    rollNumber: {
+      type: String, // 2-digit roll no (per class)
+      trim: true,
     },
-    age: {
-      type: Number,
-      required: function () {
-        return this.role === "student";
-      },
-    },
+
     class: {
       type: String,
-      required: function () {
-        return this.role === "student";
-      },
     },
+
     course: {
       type: String,
-      required: function () {
-        return this.role === "student";
-      },
     },
+
+    location: {
+      type: String,
+    },
+
+    age: {
+      type: Number,
+    },
+
     fatherName: {
       type: String,
-      required: function () {
-        return this.role === "student";
-      },
     },
   },
   { timestamps: true }
 );
 
-//
-//  Pre-save hook — Hash password before saving
-//
+
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next(); // only hash if changed
-  // If password already looks like a bcrypt hash, skip hashing to avoid double-hash
-  if (typeof this.password === "string" && this.password.startsWith("$2")) {
-    return next();
+  const User = mongoose.model("User", userSchema);
+
+  // Hash password if not already hashed
+  if (
+    this.isModified("password") &&
+    this.password &&
+    !this.password.startsWith("$2")
+  ) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+
+  // 🎓 Generate Random GR Number (6-digit unique)
+  if (this.role === "student" && !this.grNumber) {
+    let unique = false;
+    let newGR;
+
+    while (!unique) {
+      newGR = Math.floor(100000 + Math.random() * 900000).toString(); // random 6-digit
+      const existing = await User.findOne({ grNumber: newGR });
+      if (!existing) unique = true;
+    }
+
+    this.grNumber = newGR;
+  }
+
+  //  Generate Roll Number (2-digit per class)
+  if (this.role === "student" && !this.rollNumber && this.class) {
+    const lastStudentInClass = await User.findOne({
+      role: "student",
+      class: this.class,
+    })
+      .sort({ rollNumber: -1 })
+      .select("rollNumber");
+
+    let nextRoll = 1;
+    if (lastStudentInClass?.rollNumber)
+      nextRoll = parseInt(lastStudentInClass.rollNumber) + 1;
+
+    this.rollNumber = String(nextRoll).padStart(2, "0"); // e.g. 01, 02
+  }
+
   next();
 });
 
 //
-//  Method to compare passwords during login
+// Password comparison
 //
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
 //
-// Method to generate JWT token
+// JWT Token generation
 //
 userSchema.methods.generateToken = function () {
   return jwt.sign(
     { id: this._id, role: this.role },
-    process.env.JWT_SECRET || "defaultsecret", // fallback for development
+    process.env.JWT_SECRET || "defaultsecret",
     { expiresIn: "7d" }
   );
 };

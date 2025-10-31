@@ -112,7 +112,7 @@ export default function PlacementsPage() {
               transition={{ delay: index * 0.1 }}
               className="flex flex-col items-center text-center"
             >
-              <div className="relative w-32 h-32 sm:w-36 sm:h-36 rounded-full overflow-hidden mb-4 border-4 border-indigo-100 hover:border-indigo-300 transition-all duration-300">
+              <div className="relative w-32 h-32 sm:w-36 sm:h-36 rounded-full overflow-hidden mb-4 border-4 border-orange-200 hover:border-orange-500 transition-all duration-300">
                 <Image
                   src={student.image}
                   alt={student.name}
@@ -123,7 +123,7 @@ export default function PlacementsPage() {
               <h2 className="text-lg font-semibold text-gray-800">
                 {student.name}
               </h2>
-              <p className="text-indigo-600 text-sm font-medium mt-1">
+              <p className="text-orange-600 text-sm font-medium mt-1">
                 {student.role}
               </p>
               <p className="text-gray-500 text-sm">{student.company}</p>

@@ -6,32 +6,20 @@ const circularSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      unique: true,
+      maxlength: 150,
     },
     description: {
       type: String,
       required: true,
       trim: true,
+      maxlength: 2000,
     },
     fileUrl: {
-      type: String, // optional PDF or document link
-      trim: true,
-    },
-    issuedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // clerk or admin
-      required: true,
-    },
-    audience: {
-      type: String,
-      enum: ["Students", "Teachers", "All"],
-      default: "All",
-    },
-    validFrom: {
-      type: Date,
-      default: Date.now,
-    },
-    validTill: {
-      type: Date,
+      url: { type: String, trim: true },
+      filename: { type: String, trim: true },
+      mimeType: { type: String, trim: true },
+      size: { type: Number },
     },
   },
   { timestamps: true }
