@@ -25,14 +25,17 @@ export default function ForgotPassword() {
     e.preventDefault();
     setStatus("loading");
     setMessage("");
+
     try {
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to send email");
+
       setStatus("sent");
       setMessage(data.message || "Reset link sent successfully!");
     } catch (err) {
@@ -59,11 +62,13 @@ export default function ForgotPassword() {
             >
               <Mail className="w-6 h-6" />
             </motion.div>
+
             <CardTitle className="text-2xl font-semibold text-gray-800">
               Forgot Password
             </CardTitle>
+
             <CardDescription className="text-gray-500">
-              Enter your email, and we'll send you a reset link.
+              Enter your email, and we&apos;ll send you a reset link.
             </CardDescription>
           </CardHeader>
 
@@ -99,7 +104,7 @@ export default function ForgotPassword() {
               </Button>
             </form>
 
-            {/* Feedback Messages */}
+            {/* ✅ Feedback Messages */}
             {status === "sent" && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
